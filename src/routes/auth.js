@@ -7,6 +7,9 @@ const { ValidateSignUp, ValidateLogin } = require("../utils/ValidateData");
 const { User } = require("../models/user");
 const { VerifyEmail } = require("../emailVerify/emailVerify");
 const { Session } = require("../models/session");
+const { UserAuth } = require("../middleware/userauth");
+const e = require("express");
+const { SendOTP } = require("../emailVerify/SendOTP");
 
 authRouter.post("/auth/signup", async (req, res) => {
   try {
@@ -129,7 +132,7 @@ authRouter.post("/auth/login", async (req, res) => {
   try {
     // validate emailId and password
     ValidateLogin(req);
-    const {emailId,password} = req.body
+    const { emailId, password } = req.body;
     const user = await User.findOne({ emailId });
     if (!user) {
       return res.status(400).json({
@@ -155,34 +158,95 @@ authRouter.post("/auth/login", async (req, res) => {
     res.cookie("accessToken", accessToken, {
       expires: new Date(Date.now() + 8 * 3600000),
     });
-    
+
     const refreshToken = await user.refreshJWT();
     res.cookie("refreshToken", refreshToken, {
       expires: new Date(Date.now() + 8 * 3600000),
     });
 
+    (user.isLoggedIn = true), await user.save();
 
-    user.isLoggedIn = true,
-    await user.save();
-    
     //Check for existing session and delete it
-    const oldSession = await Session.findOne({userId:user._id});
+    const oldSession = await Session.findOne({ userId: user._id });
     if (oldSession) {
-      await Session.deleteOne({userId:user._id})      
+      await Session.deleteOne({ userId: user._id });
     }
 
     // create a new session
-    await Session.create({userId:user._id});
+    await Session.create({ userId: user._id });
     return res.status(200).json({
-      success:true,
-      message:  `Welcome back ${user.firstName}`,
-      user
-    })
+      success: true,
+      message: `Welcome back ${user.firstName}`,
+      user,
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: error.message,
     });
   }
+});
+
+authRouter.post("/auth/logout", UserAuth, async (req, res) => {
+  try {
+    // Logout logic
+    res.cookie("accessToken", null, {
+      expires: new Date(Date.now()),
+    });
+    const user = req.user;
+    user.isLoggedIn = false;
+    await user.save();
+
+    await Session.deleteMany({ userId: user._id });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+      user:user._id,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+authRouter.post("/auth/forgetpassword",async (req,res) => {
+  try {
+    const {emailId} = req.body;
+    if(!validator.isEmail(emailId)) {
+      return res.status(400).json({
+        success:false,
+        message:"Email not valid"
+      });
+    }
+    
+    const user = await User.findOne({emailId});
+    if(!user){
+      return res.status(400).json({
+      success:false,
+      message:"User not Found"
+    });
+    }
+    const otp = Math.floor(100000+ Math.random()*90000).toString()
+    const otpExpiry = new Date(Date.now() + 10 * 60*1000 )
+    user.otp = otp;
+    user.otpExpiry = otpExpiry;
+
+    await user.save();
+    await SendOTP(otp,emailId)
+    return res.status(200).json({
+      success:true,
+      message:"OTP sent successfully "
+    })
+  } catch (error) {
+    return res.status(400).json({
+      success:false,
+      message:error.message
+    })
+    
+  }
+
 });
 module.exports = { authRouter };
