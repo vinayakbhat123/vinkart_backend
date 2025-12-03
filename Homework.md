@@ -37,3 +37,5 @@
   - creating  /forget password api 
   - created /auth/verifyotp api
   - created /auth/changepassword api
+  - created /userRouter with /allusers and /getuserdata api 
+  
