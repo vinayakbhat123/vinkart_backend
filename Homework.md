@@ -37,5 +37,8 @@
   - creating  /forget password api 
   - created /auth/verifyotp api
   - created /auth/changepassword api
-  - created /userRouter with /allusers and /getuserdata api 
+  - created /userRouter with /allusers and /getuserdata api
+  # Install cors
+    - npm i cors
+       - app.use(cors({origin,credentils})) in app.js 
   
