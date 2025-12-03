@@ -1,7 +1,7 @@
 # Steps to create Backend - development:-
  - Create package.json file -> npm init
  - change script in json add "start": "node src/app.js" 
- # Install express nodemon jsonwebtoken mongoose - > npm i express, -g nodemon, jsonwebtoken, mongoose
+ # Install express nodemon jsonwebtoken mongoose - > npm i express, -g nodemon, jsonwebtoken, mongoose,validator
  - require mongoose and create a server.
  # Install dotenv library  -> npm i dotenv --save
      - require("dotenv").config()
@@ -27,11 +27,13 @@
     - Username and Password not accepted when using nodemailer? - Stack Overflow https://share.google/RKHVoov4gjctbfM1b 
     - create passkeys for mail and 2 step verifications 
     - Email sent successfully
-    - created /auth/verify API 
-    - created /auth/reverify API
-    - created userSchema.methods.getJWT() = function () {}
-    - Created Login api 
-    - created sessionModel and ref to "User"
-    - Creating github repository
-  - created logout api
-  - creating forget password api 
+  - created /auth/verify API 
+  - created /auth/reverify API
+  - created userSchema.methods.getJWT() = function () {}
+  - Created /Login api 
+  - created sessionModel and ref to "User"
+  - Creating github repository
+  - created /logout api
+  - creating  /forget password api 
+  - created /auth/verifyotp api
+  - created /auth/changepassword api

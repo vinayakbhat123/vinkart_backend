@@ -85,21 +85,21 @@ userSchema.methods.getJWT = async function () {
   return token;
 };
 
-userSchema.methods.accessJWT = async function () {
-  const user = this;
-  const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
-    expiresIn: "10d",
-  });
-  return token;
-};
+// userSchema.methods.accessJWT = async function () {
+//   const user = this;
+//   const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
+//     expiresIn: "10d",
+//   });
+//   return token;
+// };
 
-userSchema.methods.refreshJWT = async function () {
-  const user = this;
-  const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
-    expiresIn: "30d",
-  });
-  return token;
-};
+// userSchema.methods.refreshJWT = async function () {
+//   const user = this;
+//   const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
+//     expiresIn: "30d",
+//   });
+//   return token;
+// };
 userSchema.methods.validatePassword = async function (password) {
   const user = this;
   const isPasswordValid = await bcrypt.compare(password, user.password);

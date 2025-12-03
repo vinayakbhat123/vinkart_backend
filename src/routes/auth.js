@@ -3,7 +3,11 @@ const authRouter = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const validator = require("validator");
-const { ValidateSignUp, ValidateLogin } = require("../utils/ValidateData");
+const {
+  ValidateSignUp,
+  ValidateLogin,
+  ValidateChangePassword,
+} = require("../utils/ValidateData");
 const { User } = require("../models/user");
 const { VerifyEmail } = require("../emailVerify/emailVerify");
 const { Session } = require("../models/session");
@@ -29,103 +33,21 @@ authRouter.post("/auth/signup", async (req, res) => {
       emailId,
       password: passwordhash,
     });
+    // save data in database
+    const userData = await user.save();
     // creating token for email
-    const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
-      expiresIn: "10m",
+    const token = await user.getJWT();
+    res.cookie("token", token, {
+      expires: new Date(Date.now() + 8 * 3600000),
     });
-    VerifyEmail(token, emailId);
-    user.token = token;
-    // saved the fields in database
-    const saveduser = await user.save();
-    res.json({ message: "User Data saved ", data: saveduser });
+
+    return res.status(200).json({
+      success: true,
+      message: "User Data saved ",
+      userData,
+    });
   } catch (error) {
     res.status(400).send("ERROR : " + error.message);
-  }
-});
-authRouter.post("/auth/verify", async (req, res) => {
-  try {
-    const Tokens = req.headers.authorization;
-
-    // Validate the token header
-    if (!Tokens || !Tokens.startsWith("Bearer ")) {
-      return res.status(400).json({
-        success: false,
-        message: "Authorization token is missing or invalid",
-      });
-    }
-
-    const token = Tokens.split(" ")[1];
-    let decoded;
-
-    // Token verification block
-    try {
-      decoded = jwt.verify(token, process.env.SECRET_KEY);
-    } catch (error) {
-      if (error.name === "TokenExpiredError") {
-        return res.status(400).json({
-          success: false,
-          message: "Registration token expired",
-        });
-      }
-      return res.status(400).json({
-        success: false,
-        message: "Token verification failed",
-      });
-    }
-
-    // Fetch user profile based on the decoded payload
-    const user = await User.findById(decoded._id);
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    user.token = null;
-    user.isVerified = true;
-    await user.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Email verified successfully",
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-});
-authRouter.post("/auth/reverify", async (req, res) => {
-  try {
-    const { emailId } = req.body;
-    if (!validator.isEmail(emailId)) {
-      throw new Error("Email is not valid!");
-    }
-    const user = await User.findOne({ emailId });
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "User Not Found",
-      });
-    }
-    const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
-      expiresIn: "10m",
-    });
-    VerifyEmail(token, emailId);
-    user.token = token;
-    await user.save();
-    return res.status(200).json({
-      success: true,
-      message: "Email sent again successfully",
-      token: user.token,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
   }
 });
 authRouter.post("/auth/login", async (req, res) => {
@@ -140,6 +62,9 @@ authRouter.post("/auth/login", async (req, res) => {
         message: "User not found",
       });
     }
+    if(user.isLoggedIn === true){
+      return res.send("Your are already login ")
+    }
     const ispasswordvalid = await user.validatePassword(password);
     if (!ispasswordvalid) {
       return res.status(400).json({
@@ -147,37 +72,19 @@ authRouter.post("/auth/login", async (req, res) => {
         message: "Invalid password",
       });
     }
-    if (user.isVerified === false) {
-      return res.status(400).json({
-        success: false,
-        message: "Please Verify your account then login",
-      });
-    }
+
     // Token creation and send to cookie
-    const accessToken = await user.accessJWT();
-    res.cookie("accessToken", accessToken, {
+    const token = await user.getJWT();
+    res.cookie("token", token, {
       expires: new Date(Date.now() + 8 * 3600000),
     });
+    user.isLoggedIn = true;
+    const saveduser = await user.save();
 
-    const refreshToken = await user.refreshJWT();
-    res.cookie("refreshToken", refreshToken, {
-      expires: new Date(Date.now() + 8 * 3600000),
-    });
-
-    (user.isLoggedIn = true), await user.save();
-
-    //Check for existing session and delete it
-    const oldSession = await Session.findOne({ userId: user._id });
-    if (oldSession) {
-      await Session.deleteOne({ userId: user._id });
-    }
-
-    // create a new session
-    await Session.create({ userId: user._id });
     return res.status(200).json({
       success: true,
       message: `Welcome back ${user.firstName}`,
-      user,
+      saveduser,
     });
   } catch (error) {
     res.status(500).json({
@@ -189,64 +96,143 @@ authRouter.post("/auth/login", async (req, res) => {
 
 authRouter.post("/auth/logout", UserAuth, async (req, res) => {
   try {
-    // Logout logic
-    res.cookie("accessToken", null, {
+    res.cookie("token", null, {
       expires: new Date(Date.now()),
     });
     const user = req.user;
     user.isLoggedIn = false;
     await user.save();
-
-    await Session.deleteMany({ userId: user._id });
-
-    return res.status(200).json({
-      success: true,
-      message: "Logged out successfully",
-      user:user._id,
-    });
+    res.send("Logout Successful!!");
   } catch (error) {
     return res.status(500).json({
+      success: false,
+      message: "Error occured while logout...",
+    });
+  }
+});
+
+authRouter.post("/auth/forgetpassword", async (req, res) => {
+  try {
+    const { emailId } = req.body;
+    if (!validator.isEmail(emailId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Email not valid",
+      });
+    }
+
+    const user = await User.findOne({ emailId });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not Found",
+      });
+    }
+    const otp = Math.floor(100000 + Math.random() * 90000).toString();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    user.otp = null;
+    user.otp = otp;
+    user.otpExpiry = otpExpiry;
+
+    await user.save();
+    await SendOTP(otp, emailId);
+    return res.status(200).json({
+      success: true,
+      message: "OTP sent successfully ",
+    });
+  } catch (error) {
+    return res.status(400).json({
       success: false,
       message: error.message,
     });
   }
 });
 
-authRouter.post("/auth/forgetpassword",async (req,res) => {
+authRouter.post("/auth/verifyotp/:emailId", async (req, res) => {
   try {
-    const {emailId} = req.body;
-    if(!validator.isEmail(emailId)) {
+    const { otp } = req.body;
+    if (!otp) {
       return res.status(400).json({
-        success:false,
-        message:"Email not valid"
+        success: false,
+        message: "OTP not valid",
       });
     }
-    
-    const user = await User.findOne({emailId});
-    if(!user){
+    const { emailId } = req.params;
+    if (!validator.isEmail(emailId)) {
       return res.status(400).json({
-      success:false,
-      message:"User not Found"
-    });
+        success: false,
+        message: "Email not valid",
+      });
     }
-    const otp = Math.floor(100000+ Math.random()*90000).toString()
-    const otpExpiry = new Date(Date.now() + 10 * 60*1000 )
-    user.otp = otp;
-    user.otpExpiry = otpExpiry;
-
+    const user = await User.findOne({ emailId });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    if (!user.otp || !user.otpExpiry) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP is not generated or already login",
+      });
+    }
+    if (user.otpExpiry < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP Expired please request new one",
+      });
+    }
+    if (otp !== user.otp) {
+      return res.status(400).json({
+        success: false,
+        message: "OTP is invalid",
+      });
+    }
+    user.otp = null;
+    user.otpExpiry = null;
     await user.save();
-    await SendOTP(otp,emailId)
-    return res.status(200).json({
-      success:true,
-      message:"OTP sent successfully "
-    })
+    return res.status(400).json({
+      success: false,
+      message: "OTP verified successfully",
+    });
   } catch (error) {
     return res.status(400).json({
-      success:false,
-      message:error.message
-    })
-    
+      success: false,
+      message: error.message,
+    });
   }
+});
 
+authRouter.post("/auth/changepassword/:emailId", async (req, res) => {
+  try {
+    const { newpassword, confirmpassword } = req.body;
+    const { emailId } = req.params;
+    // validate the email and password
+    ValidateChangePassword(newpassword, confirmpassword, emailId);
+    const user = await User.findOne({ emailId });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "user not found",
+      });
+    }
+    if (!newpassword === confirmpassword) {
+      throw new Error("Both password must be same");
+    }
+    user.password = null;
+    const passwordhash = await bcrypt.hash(newpassword, 10);
+    user.password = passwordhash;
+    await user.save();
+    return res.status(200).json({
+      success: true,
+      message: "Password changed succesfully",
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
 });
 module.exports = { authRouter };
