@@ -9,10 +9,7 @@ const {
   ValidateChangePassword,
 } = require("../utils/ValidateData");
 const { User } = require("../models/user");
-const { VerifyEmail } = require("../emailVerify/emailVerify");
-const { Session } = require("../models/session");
 const { UserAuth } = require("../middleware/userauth");
-const e = require("express");
 const { SendOTP } = require("../emailVerify/SendOTP");
 
 authRouter.post("/auth/signup", async (req, res) => {
@@ -40,6 +37,7 @@ authRouter.post("/auth/signup", async (req, res) => {
     res.cookie("token", token, {
       expires: new Date(Date.now() + 8 * 3600000),
     });
+    console.log("token created in signup", token);
 
     return res.status(200).json({
       success: true,
@@ -62,8 +60,11 @@ authRouter.post("/auth/login", async (req, res) => {
         message: "User not found",
       });
     }
-    if(user.isLoggedIn === true){
-      return res.send("Your are already login ")
+    if (user.isLoggedIn === true) {
+      return res.status(400).json({
+        success: false,
+        message: "You are already login",
+      });
     }
     const ispasswordvalid = await user.validatePassword(password);
     if (!ispasswordvalid) {
@@ -78,6 +79,7 @@ authRouter.post("/auth/login", async (req, res) => {
     res.cookie("token", token, {
       expires: new Date(Date.now() + 8 * 3600000),
     });
+    console.log("token created after login",token)
     user.isLoggedIn = true;
     const saveduser = await user.save();
 
@@ -102,7 +104,10 @@ authRouter.post("/auth/logout", UserAuth, async (req, res) => {
     const user = req.user;
     user.isLoggedIn = false;
     await user.save();
-    res.send("Logout Successful!!");
+    return res.status(200).json({
+      success: true,
+      message: "Logout Successfull",
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,

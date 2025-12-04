@@ -4,6 +4,7 @@ const {User} = require("../models/user");
 const UserAuth = async (req,res,next) => {
   try {
     const {token} = req.cookies;
+    console.log("cookiesin userAuth",token)
     if(!token){
       return res.status(400).json({
         success:false,
@@ -14,7 +15,7 @@ const UserAuth = async (req,res,next) => {
     const tokenobj = await jwt.verify(token,process.env.SECRET_KEY)
     const {_id} = tokenobj
     // Find the user
-    const user = await User.findById({_id})
+    const user = await User.findById(_id)
     if(!user){
        return res.status(400).json({
         success:false,
