@@ -58,8 +58,6 @@ const userSchema = mongoose.Schema(
       default: "user",
     },
     token: { type: String, default: null },
-    isVerified: { type: Boolean, default: false },
-    isLoggedIn: { type: Boolean, default: false },
     otp: { type: String, default: null, maxLength: 6 },
     otpExpiry: {
       type: Date,
@@ -67,7 +65,6 @@ const userSchema = mongoose.Schema(
     },
     address: {
       type: String,
-      minLength: 5,
       maxLength: 50,
     },
     zipCode: { type: String, maxLength: 8 },

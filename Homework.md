@@ -41,4 +41,11 @@
   # Install cors
     - npm i cors
        - app.use(cors({origin,credentils})) in app.js 
+  # create account on cloudinary and Install cloudinary 
+     - command - npm install cloudinary
+    - created cloudinary.js file added all cloudinary name,api_key and api_Secret_key
+  # Install multer for file handling from clientside to server side (middleware)
+    - command  -> npm i multer
+    - created /profile/update api for admin 
+  # created cloudinary and multer 
   

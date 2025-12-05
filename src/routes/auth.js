@@ -37,7 +37,7 @@ authRouter.post("/auth/signup", async (req, res) => {
     res.cookie("token", token, {
       expires: new Date(Date.now() + 8 * 3600000),
     });
-    console.log("token created in signup", token);
+    
 
     return res.status(200).json({
       success: true,
@@ -60,12 +60,6 @@ authRouter.post("/auth/login", async (req, res) => {
         message: "User not found",
       });
     }
-    if (user.isLoggedIn === true) {
-      return res.status(400).json({
-        success: false,
-        message: "You are already login",
-      });
-    }
     const ispasswordvalid = await user.validatePassword(password);
     if (!ispasswordvalid) {
       return res.status(400).json({
@@ -79,7 +73,6 @@ authRouter.post("/auth/login", async (req, res) => {
     res.cookie("token", token, {
       expires: new Date(Date.now() + 8 * 3600000),
     });
-    console.log("token created after login",token)
     user.isLoggedIn = true;
     const saveduser = await user.save();
 
@@ -96,14 +89,11 @@ authRouter.post("/auth/login", async (req, res) => {
   }
 });
 
-authRouter.post("/auth/logout", UserAuth, async (req, res) => {
+authRouter.post("/auth/logout",  async (req, res) => {
   try {
     res.cookie("token", null, {
       expires: new Date(Date.now()),
     });
-    const user = req.user;
-    user.isLoggedIn = false;
-    await user.save();
     return res.status(200).json({
       success: true,
       message: "Logout Successfull",
