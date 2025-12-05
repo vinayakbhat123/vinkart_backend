@@ -72,11 +72,11 @@ userRouter.get("/profile/view", UserAuth, async (req, res) => {
     });
   }
 });
-userRouter.patch("/update/:id",UserAuth,singleUpload, async (req,res) => {
+userRouter.patch("/update/:userId",UserAuth,singleUpload, async (req,res) => {
   try {
-    const userIdToUpdate = req.params;
+    const userIdToUpdate = req.params.userId;
     const LoggedInUser = req.user;   // from userAuth;
-    const {firstName,lastName,address,city,zipcode,phoneno,role} = req.body;
+    const {firstName,lastName,address,city,zipCode,phoneNo,role} = req.body;
 
     if(LoggedInUser._id.toString() !== userIdToUpdate &&
     LoggedInUser.role !== "admin"){
@@ -98,7 +98,6 @@ userRouter.patch("/update/:id",UserAuth,singleUpload, async (req,res) => {
       if(photoId){
         await cloudinary.uploader.destroy(photoId)
       }
-    }
     const UploadResult = await new Promise((resolve,reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {folder:"profiles"},
@@ -111,16 +110,17 @@ userRouter.patch("/update/:id",UserAuth,singleUpload, async (req,res) => {
     });
     photoUrl = UploadResult.secure_url;
     photoId = UploadResult.public_id
-
+    }
     // Update fields
     user.firstName= firstName ||  user.firstName;
     user.lastName = lastName || user.lastName;
     user.address = address || user.address;
     user.city = city ||  user.city;
-    user.zipcode = zipcode ||  user.zipcode;
-    user.phoneno = phoneno ||  user.phoneno;
+    user.zipcode = zipCode ||  user.zipCode;
+    user.phoneno = phoneNo ||  user.phoneNo;
     user.photoUrl = photoUrl || user.photoUrl;
     user.photoId = photoId || user.photoId;
+     user.role = role;
 
     const updatedUser = await user.save();
     return res.status(200).json({

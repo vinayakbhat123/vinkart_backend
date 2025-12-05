@@ -28,7 +28,7 @@ const userSchema = mongoose.Schema(
     },
     photoId: {
       type: String,
-      maxLength: 20,
+      maxLength: 50,
       default: "", // cloudinary photoId for deletion
     },
     emailId: {
@@ -65,10 +65,10 @@ const userSchema = mongoose.Schema(
     },
     address: {
       type: String,
-      maxLength: 50,
+      maxLength: 100,
     },
     zipCode: { type: String, maxLength: 8 },
-    city: { type: String, maxLength: 30 },
+    city: { type: String, maxLength: 50 },
     phoneNo: { type: String, maxLength: 12 },
   },
   { timestamps: true }
