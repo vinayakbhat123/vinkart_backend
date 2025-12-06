@@ -171,30 +171,4 @@ userRouter.patch("/update/:userId", UserAuth, singleUpload, async (req, res) => 
   }
 });
 
-userRouter.post("/addproduct",UserAuth,isAdmin, async (req,res) => {
-  try {
-    const {productName,productDesc,productPrice,category,brand} = req.body;
-    const user = req.user;
-    if(!productName || !productDesc || !productPrice || !category || !brand){
-      return res.status(400).json({
-        success:false,
-        message:"All fields are required"
-      });
-    }
-    // handle multiple image uploads
-    let productImg = [];
-    if(req.files && req.files.length >0 {
-      for (let file of req.files){
-        // 
-      }
-    })
-  } catch (error) {
-    return res.status(500).json({
-      success:false,
-      message:error.message
-    })
-    
-  }
-}
-)
 module.exports = { userRouter };

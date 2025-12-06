@@ -51,3 +51,9 @@
      - created multer middleware
      - created cloudinary.js in utils
   # Created a product Model 
+     - created /addproducts api
+     - created /getproduct api
+  # Install datauri
+     - created datauri.js file in utils
+     - created /delete/:productId
+     - created /update/:productId

@@ -19,4 +19,4 @@ const productSchema = new mongoose.Schema({
   brand:{type:String,required:true}
 },{timestamps:true});
 
-module.exports = mongoose.model("product",productSchema);
+module.exports = mongoose.model("Product",productSchema);

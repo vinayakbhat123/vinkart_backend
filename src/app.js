@@ -2,6 +2,7 @@ const express = require("express");
 const connectDB = require("./database/db");
 const { authRouter } = require("./routes/auth");
 const {userRouter} = require("./routes/user")
+const {productRouter} = require("./routes/product")
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 require("dotenv").config()
@@ -17,6 +18,8 @@ app.use(cookieParser());   // must be before routes
 
 app.use("/",authRouter)
 app.use("/",userRouter)
+app.use("/",productRouter)
+
 
 connectDB()
 .then(() => {
