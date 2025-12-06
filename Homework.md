@@ -48,4 +48,6 @@
     - command  -> npm i multer
     - created /profile/update api for admin 
   # created cloudinary and multer 
-  
+     - created multer middleware
+     - created cloudinary.js in utils
+  # Created a product Model 
