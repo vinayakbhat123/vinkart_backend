@@ -95,7 +95,7 @@ productRouter.delete(
   async (req, res) => {
     try {
       const { productId } = req.params;
-      const product = await product.findById(productId);
+      const product = await Product.findById(productId);
       if (!product) {
         return res.status(400).json({
           success: false,
@@ -139,7 +139,7 @@ productRouter.put(
         brand,
         existingImages,
       } = req.body;
-      const product = await product.findById(productId);
+      const product = await Product.findById(productId);
       if (!product) {
         return res.status(404).json({
           success: false,
