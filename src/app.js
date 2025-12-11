@@ -5,6 +5,7 @@ const {userRouter} = require("./routes/user")
 const {productRouter} = require("./routes/product")
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const { cartRouter } = require("./routes/cart");
 require("dotenv").config()
 const app = express();
 const PORT = process.env.PORT || 3000
@@ -19,6 +20,7 @@ app.use(cookieParser());   // must be before routes
 app.use("/",authRouter)
 app.use("/",userRouter)
 app.use("/",productRouter)
+app.use("/",cartRouter)
 
 
 connectDB()

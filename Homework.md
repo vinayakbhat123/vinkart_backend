@@ -57,3 +57,8 @@
      - created datauri.js file in utils
      - created /delete/:productId
      - created /update/:productId
+   # created cartmodel
+      - created cartroutes
+      - added to app.js
+      - creating cart api
+         - created /getcart
