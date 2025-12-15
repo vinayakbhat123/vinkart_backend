@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const productSchema = new mongoose.Schema({
   userId:{
     type:mongoose.Schema.Types.ObjectId,
-    ref:"user",
+    ref:"User",
   },
   productName:{
     type:String,required:true},
@@ -19,4 +19,5 @@ const productSchema = new mongoose.Schema({
   brand:{type:String,required:true}
 },{timestamps:true});
 
-module.exports = mongoose.model("Product",productSchema);
+const Product = mongoose.model("Product",productSchema);
+module.exports = Product
